@@ -16,6 +16,7 @@ pub fn detect_duplicates(
     metadata: bool,
     filename: bool,
     stream: bool,
+    json: bool,
 ) -> crate::Result<()> {
     let songs = get_songs(root)?;
     let mut duplicates = Vec::new();
@@ -28,7 +29,11 @@ pub fn detect_duplicates(
     if stream {
         duplicates.append(&mut find_duplicates(&songs, stream::hash_stream)?);
     }
-    dbg!(duplicates);
+    if json {
+        println!("{}", serde_json::to_string_pretty(&duplicates).unwrap());
+    } else {
+        println!("{}", toml::to_string_pretty(&duplicates).unwrap());
+    }
     Ok(())
 }
 

@@ -8,6 +8,10 @@ pub struct Cli {
     #[arg(short, long, default_value_t = tracing::Level::INFO)]
     pub log_level: tracing::Level,
 
+    /// Output json
+    #[arg(short, long)]
+    pub json: bool,
+
     #[command(subcommand)]
     pub command: Command,
 }

@@ -37,7 +37,7 @@ fn main() -> crate::Result<()> {
     setup_tracing(args.log_level);
 
     match args.command {
-        Command::Sort { root, apply } => sort(root, apply)?,
+        Command::Sort { root, apply } => sort(root, apply, args.json)?,
         Command::DetectDupe(detect_dupe) => {
             if !detect_dupe.metadata && !detect_dupe.filename && !detect_dupe.stream {
                 Err(error::Error::Cli(
@@ -49,68 +49,65 @@ fn main() -> crate::Result<()> {
                 detect_dupe.metadata,
                 detect_dupe.filename,
                 detect_dupe.stream,
+                args.json,
             )?;
         }
         Command::Info(i) => {
             let info = get_info(&i.song, i.nonstandard)?;
-            print!("{}", toml::to_string_pretty(&info).unwrap());
+            if args.json {
+                println!("{}", serde_json::to_string_pretty(&info).unwrap());
+            } else {
+                println!("{}", toml::to_string_pretty(&info).unwrap());
+            }
         }
-        Command::Stats(s) => display_stats(s)?,
+        Command::Stats(s) => display_stats(s, args.json)?,
         Command::Hash { song } => {
             let hash = duplicates::hash_stream(&song)?.expect("hash_stream never exits with None");
-            println!("{hash}");
+            if args.json {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&hash.to_string()).unwrap()
+                );
+            } else {
+                println!("{hash}");
+            }
         }
     }
     Ok(())
 }
 
-fn display_stats(s: cli::Stats) -> crate::Result<()> {
+fn display_stats(s: cli::Stats, json: bool) -> crate::Result<()> {
     let songs = walksongs::get_songs(s.root.clone())?;
-    let stats = stats::get_stats(&s.root, &songs)?;
+    let mut stats = stats::get_stats(&s.root, &songs)?;
 
-    print!(
-        "{}",
-        toml::to_string_pretty(&HashMap::from([("Stats", stats.numbers())])).unwrap()
-    );
-
-    if s.all {
-        print!(
-            "{}",
-            toml::to_string_pretty(&HashMap::from([("All", &stats.total)])).unwrap()
-        );
+    if !s.all {
+        stats.total.clear();
     }
 
-    if s.tagged {
-        print!(
-            "{}",
-            toml::to_string_pretty(&HashMap::from([("Tagged", &stats.tagged)])).unwrap()
-        );
+    if !s.tagged {
+        stats.tagged.clear();
     }
 
-    if s.untagged {
-        print!(
-            "{}",
-            toml::to_string_pretty(&HashMap::from([("Untagged", &stats.untagged)])).unwrap()
-        );
+    if !s.untagged {
+        stats.untagged.clear();
     }
 
-    if s.sorted {
-        print!(
-            "{}",
-            toml::to_string_pretty(&HashMap::from([("Sorted", &stats.sorted)])).unwrap()
-        );
+    if !s.sorted {
+        stats.sorted.clear();
     }
 
-    if s.unsorted {
-        print!(
-            "{}",
-            toml::to_string_pretty(&HashMap::from([("Unsorted", &stats.unsorted)])).unwrap()
-        );
+    if !s.unsorted {
+        stats.unsorted.clear();
+    }
+    if json {
+        println!("{}", serde_json::to_string_pretty(&stats).unwrap());
+    } else {
+        println!("{}", toml::to_string_pretty(&stats).unwrap());
     }
     Ok(())
 }
 
-fn sort(root: PathBuf, apply: bool) -> Result<()> {
+fn sort(root: PathBuf, apply: bool, json: bool) -> Result<()> {
     let songs = walksongs::get_songs(root.clone())?;
     let mut transactions: Vec<Transaction> = songs
         .iter()
@@ -129,12 +126,14 @@ fn sort(root: PathBuf, apply: bool) -> Result<()> {
         for transaction in transactions {
             transaction.apply()?
         }
+    } else if json {
+        println!("{}", serde_json::to_string_pretty(&transactions).unwrap());
     } else {
         let transactions = transactions
             .iter()
             .map(|t| t.to_string())
             .collect::<Vec<_>>();
-        print!(
+        println!(
             "{}",
             toml::to_string_pretty(&HashMap::from([("Transactions", transactions)])).unwrap()
         );

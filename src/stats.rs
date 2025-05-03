@@ -11,18 +11,43 @@ use crate::{
     sort::target_location,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Stats<'a> {
+    pub stats: StatNumbers,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub total: Vec<&'a Path>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub tagged: Vec<&'a Path>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub untagged: Vec<&'a Path>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub sorted: Vec<&'a Path>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub unsorted: Vec<&'a Path>,
 }
 
-impl Stats<'_> {
-    pub(crate) fn numbers(&self) -> StatNumbers {
-        StatNumbers {
+impl<'a> Stats<'a> {
+    pub fn new(
+        total: Vec<&'a Path>,
+        tagged: Vec<&'a Path>,
+        untagged: Vec<&'a Path>,
+        sorted: Vec<&'a Path>,
+        unsorted: Vec<&'a Path>,
+    ) -> Self {
+        let mut s = Self {
+            stats: Default::default(),
+            total,
+            tagged,
+            untagged,
+            sorted,
+            unsorted,
+        };
+        s.update_numbers();
+        s
+    }
+
+    fn update_numbers(&mut self) {
+        self.stats = StatNumbers {
             total: self.total.len(),
             tagged: self.tagged.len(),
             untagged: self.untagged.len(),
@@ -32,7 +57,7 @@ impl Stats<'_> {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Default)]
 pub struct StatNumbers {
     pub total: usize,
     pub tagged: usize,
@@ -103,11 +128,5 @@ pub fn get_stats<'a>(prefix: &Path, songs: &'a [PathBuf]) -> crate::Result<Stats
         .map(|(p, _, _)| *p)
         .collect();
 
-    Ok(Stats {
-        total,
-        tagged,
-        untagged,
-        sorted,
-        unsorted,
-    })
+    Ok(Stats::new(total, tagged, untagged, sorted, unsorted))
 }
