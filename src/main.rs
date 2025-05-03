@@ -1,8 +1,9 @@
-use std::collections::HashMap;
+#![warn(clippy::nursery)]
 
 use clap::Parser;
 use cli::{Cli, Command};
 use info::get_info;
+use std::collections::HashMap;
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{filter::FilterFn, layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -18,7 +19,7 @@ pub use error::{Error, Result};
 
 fn setup_tracing(max_level: tracing::Level) {
     let crate_filter = FilterFn::new(|s| {
-        return !(s.target().starts_with("symphonia") && s.level() >= &tracing::Level::INFO);
+        !(s.target().starts_with("symphonia") && s.level() >= &tracing::Level::INFO)
     });
 
     tracing_subscriber::registry()
@@ -39,13 +40,12 @@ fn main() -> crate::Result<()> {
                     "Please supply one of either --metadata, --filename, or --stream".to_string(),
                 ))?;
             }
-            let duplicates = duplicates::detect_duplicates(
+            duplicates::detect_duplicates(
                 detect_dupe.root,
                 detect_dupe.metadata,
                 detect_dupe.filename,
                 detect_dupe.stream,
             )?;
-            dbg!(duplicates);
         }
         Command::Info(i) => {
             let info = get_info(&i.song, i.nonstandard)?;

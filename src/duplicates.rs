@@ -11,7 +11,7 @@ mod stream;
 
 pub use stream::hash_stream;
 
-pub(crate) fn detect_duplicates(
+pub fn detect_duplicates(
     root: PathBuf,
     metadata: bool,
     filename: bool,

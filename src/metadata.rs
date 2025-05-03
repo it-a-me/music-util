@@ -33,9 +33,7 @@ pub fn get_standard_metadata(probed: &mut ProbeResult, key: StandardTagKey) -> O
 }
 
 fn try_get_key(metadata: &mut Metadata, key: StandardTagKey) -> Option<String> {
-    let Some(metadata) = metadata.skip_to_latest() else {
-        return None;
-    };
+    let metadata = metadata.skip_to_latest()?;
     for tag in metadata.tags() {
         if let Some(k) = tag.std_key {
             if k == key {

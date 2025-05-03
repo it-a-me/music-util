@@ -12,7 +12,7 @@ pub struct Stats<'a> {
     pub sorted: Vec<&'a Path>,
 }
 
-impl<'a> Stats<'a> {
+impl Stats<'_> {
     pub(crate) fn numbers(&self) -> StatNumbers {
         StatNumbers {
             total: self.total.len(),
@@ -24,14 +24,14 @@ impl<'a> Stats<'a> {
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub(crate) struct StatNumbers {
+pub struct StatNumbers {
     pub total: usize,
     pub tagged: usize,
     pub untagged: usize,
     pub sorted: usize,
 }
 
-pub fn get_stats(songs: &Vec<PathBuf>) -> crate::Result<Stats> {
+pub fn get_stats(songs: &[PathBuf]) -> crate::Result<Stats> {
     let songs = songs
         .iter()
         .map(|s| -> crate::Result<_> { Ok((s.as_path(), is_file_tagged(s)?)) })
