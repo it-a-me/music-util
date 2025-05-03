@@ -16,6 +16,16 @@ pub enum Command {
     DetectDupe(DetectDupe),
     Info(Info),
     Stats(Stats),
+    /// Sort the music directory
+    Sort {
+        /// Apply the sort POTENTIAL LOSS OF DATA MAY OCCUR
+        #[arg(long)]
+        apply: bool,
+
+        /// Root music directory
+        #[arg()]
+        root: PathBuf,
+    },
     /// Show the hash of a song's streams
     Hash {
         /// Path to a song
@@ -59,13 +69,25 @@ pub struct Info {
 #[derive(Parser, Debug, Clone)]
 /// Show stats about a library
 pub struct Stats {
+    /// Show all songs
+    #[arg(short, long)]
+    pub all: bool,
+
     /// Show tagged songs
     #[arg(short, long)]
     pub tagged: bool,
 
     /// Show untagged songs
-    #[arg(short, long)]
+    #[arg(short = 'T', long)]
     pub untagged: bool,
+
+    /// Show sorted songs
+    #[arg(short, long)]
+    pub sorted: bool,
+
+    /// Show unsorted songs
+    #[arg(short = 'S', long)]
+    pub unsorted: bool,
 
     /// Root music directory
     #[arg()]

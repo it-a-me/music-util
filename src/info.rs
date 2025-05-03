@@ -37,15 +37,11 @@ pub fn get_info(path: &Path, nonstandard: bool) -> crate::Result<Info> {
     let mut format = probe.format;
     add_metadata(&mut format.metadata(), &mut metadata, nonstandard);
 
-    let codec = if let Some(codec) = format
+    let codec = format
         .default_track()
-        .map(|t| get_codecs().get_codec(t.codec_params.codec))
-        .flatten()
-    {
-        codec.long_name
-    } else {
-        "Unknown"
-    };
+        .and_then(|t| get_codecs().get_codec(t.codec_params.codec))
+        .map(|c| c.long_name)
+        .unwrap_or("Unknown");
 
     Ok(Info {
         path: path.to_path_buf(),

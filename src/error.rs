@@ -10,4 +10,8 @@ pub enum Error {
     IO(#[from] io::Error),
     #[error("{}", .0)]
     Cli(String),
+    #[error("Missing Metadata")]
+    MissingMetadata,
+    #[error("File already exists '{}'", .0)]
+    AlreadyExists(String),
 }

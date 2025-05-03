@@ -1,12 +1,6 @@
-use std::path::Path;
-
-use symphonia::{
-    core::{
-        io::MediaSourceStream,
-        meta::{Metadata, StandardTagKey},
-        probe::ProbeResult,
-    },
-    default::get_probe,
+use symphonia::core::{
+    meta::{Metadata, StandardTagKey},
+    probe::ProbeResult,
 };
 
 pub fn get_artist(probed: &mut ProbeResult) -> Option<String> {
@@ -42,19 +36,4 @@ fn try_get_key(metadata: &mut Metadata, key: StandardTagKey) -> Option<String> {
         }
     }
     None
-}
-
-pub fn is_file_tagged(song: &Path) -> crate::Result<bool> {
-    let song = std::fs::File::open(song)?;
-    let mut probed = get_probe().format(
-        &Default::default(),
-        MediaSourceStream::new(Box::new(song), Default::default()),
-        &Default::default(),
-        &Default::default(),
-    )?;
-    Ok(is_tagged(&mut probed))
-}
-
-pub fn is_tagged(probed: &mut ProbeResult) -> bool {
-    get_title(probed).is_some() && get_artist(probed).is_some()
 }
