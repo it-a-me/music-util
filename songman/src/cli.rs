@@ -15,27 +15,14 @@ pub struct Cli {
     #[command(subcommand)]
     pub command: Command,
 }
+
 #[derive(Subcommand, Debug, Clone)]
 pub enum Command {
     DetectDupe(DetectDupe),
     Info(Info),
     Stats(Stats),
-    /// Sort the music directory
-    Sort {
-        /// Apply the sort POTENTIAL LOSS OF DATA MAY OCCUR
-        #[arg(long)]
-        apply: bool,
-
-        /// Root music directory
-        #[arg()]
-        root: PathBuf,
-    },
-    /// Show the hash of a song's streams
-    Hash {
-        /// Path to a song
-        #[arg()]
-        song: PathBuf,
-    },
+    Sort(Sort),
+    Hash(Hash),
 }
 
 #[derive(Parser, Debug, Clone)]
@@ -96,4 +83,24 @@ pub struct Stats {
     /// Root music directory
     #[arg()]
     pub root: PathBuf,
+}
+
+#[derive(Parser, Debug, Clone)]
+/// Sort the music directory
+pub struct Sort {
+    /// Apply the sort POTENTIAL LOSS OF DATA MAY OCCUR
+    #[arg(long)]
+    pub apply: bool,
+
+    /// Root music directory
+    #[arg()]
+    pub root: PathBuf,
+}
+
+#[derive(Parser, Debug, Clone)]
+/// Show the hash of a song's streams
+pub struct Hash {
+    /// Path to a song
+    #[arg()]
+    pub song: PathBuf,
 }

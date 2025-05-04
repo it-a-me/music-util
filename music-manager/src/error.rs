@@ -1,4 +1,4 @@
-use std::io;
+use std::{io, path::PathBuf};
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -8,10 +8,8 @@ pub enum Error {
     Symphonia(#[from] symphonia::core::errors::Error),
     #[error(transparent)]
     IO(#[from] io::Error),
-    #[error("{}", .0)]
-    Cli(String),
     #[error("Missing Metadata")]
     MissingMetadata,
-    #[error("File already exists '{}'", .0)]
-    AlreadyExists(String),
+    #[error("Unable to move {} to {}: File already exists", .src.to_string_lossy(), .dest.to_string_lossy())]
+    AlreadyExists { src: PathBuf, dest: PathBuf },
 }
