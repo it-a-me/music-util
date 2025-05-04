@@ -32,7 +32,10 @@ pub fn detect_duplicates(
     if json {
         println!("{}", serde_json::to_string_pretty(&duplicates).unwrap());
     } else {
-        println!("{}", toml::to_string_pretty(&duplicates).unwrap());
+        println!(
+            "{}",
+            toml::to_string_pretty(&HashMap::from([("Duplicates", &duplicates)])).unwrap()
+        );
     }
     Ok(())
 }
