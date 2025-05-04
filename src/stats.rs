@@ -3,6 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use serde::Serialize;
 use symphonia::{core::io::MediaSourceStream, default::get_probe};
 
@@ -68,7 +69,7 @@ pub struct StatNumbers {
 
 pub fn get_stats<'a>(prefix: &Path, songs: &'a [PathBuf]) -> crate::Result<Stats<'a>> {
     let songs = songs
-        .iter()
+        .par_iter()
         .map(|s| -> crate::Result<_> {
             let mut probed = get_probe().format(
                 &Default::default(),
@@ -79,20 +80,20 @@ pub fn get_stats<'a>(prefix: &Path, songs: &'a [PathBuf]) -> crate::Result<Stats
             Ok((s.as_path(), get_artist(&mut probed), get_title(&mut probed)))
         })
         .collect::<crate::Result<Vec<_>>>()?;
-    let total = songs.iter().map(|(p, _, _)| *p).collect();
+    let total = songs.par_iter().map(|(p, _, _)| *p).collect();
     let tagged: Vec<&Path> = songs
-        .iter()
+        .par_iter()
         .filter(|(_, a, t)| a.is_some() && t.is_some())
         .map(|(p, _, _)| *p)
         .collect();
     let untagged = songs
-        .iter()
+        .par_iter()
         .filter(|(_, a, t)| a.is_none() || t.is_none())
         .map(|(p, _, _)| *p)
         .collect();
 
     let sorted = songs
-        .iter()
+        .par_iter()
         .filter(|(p, a, t)| {
             if let (Some(a), Some(t)) = (a, t) {
                 return *p
@@ -110,7 +111,7 @@ pub fn get_stats<'a>(prefix: &Path, songs: &'a [PathBuf]) -> crate::Result<Stats
         .map(|(p, _, _)| *p)
         .collect();
     let unsorted = songs
-        .iter()
+        .par_iter()
         .filter(|(p, a, t)| {
             if let (Some(a), Some(t)) = (a, t) {
                 return *p
