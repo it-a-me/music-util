@@ -9,6 +9,7 @@ mod filename;
 mod metadata;
 mod stream;
 
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 pub use stream::hash_stream;
 
 pub fn detect_duplicates(
@@ -40,19 +41,32 @@ pub fn detect_duplicates(
     Ok(())
 }
 
-fn find_duplicates<F: Fn(&Path) -> crate::Result<Option<blake3::Hash>>>(
-    songs: &Vec<PathBuf>,
-    hasher: F,
-) -> crate::Result<Vec<Vec<&Path>>> {
-    let mut song_map: HashMap<blake3::Hash, Vec<&Path>> = HashMap::new();
-    for song in songs {
-        let Some(hash) = hasher(song)? else { continue };
-        if let Some(entry) = song_map.get_mut(&hash) {
-            entry.push(song.as_path());
-        } else {
-            song_map.insert(hash, vec![song.as_path()]);
-        }
-    }
-    let duplicates = song_map.into_values().filter(|v| v.len() > 1).collect();
+fn find_duplicates<F>(songs: &Vec<PathBuf>, hasher: F) -> crate::Result<Vec<Vec<&Path>>>
+where
+    F: Fn(&Path) -> crate::Result<Option<blake3::Hash>> + Send + Sync,
+{
+    let song_hashes = songs
+        .par_iter()
+        .map(|p| p.as_path())
+        .filter_map(|p| -> Option<crate::Result<(&Path, blake3::Hash)>> {
+            let hash = hasher(p).transpose()?;
+            Some(hash.map(|h| (p, h)))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let song_hashes = song_hashes.into_iter().fold(
+        HashMap::<blake3::Hash, Vec<&Path>>::new(),
+        |mut map, (song, hash)| {
+            if let Some(paths) = map.get_mut(&hash) {
+                paths.push(song);
+            } else {
+                map.insert(hash, vec![song]);
+            }
+            map
+        },
+    );
+    let duplicates = song_hashes
+        .into_values()
+        .filter(|paths| paths.len() > 1)
+        .collect();
     Ok(duplicates)
 }

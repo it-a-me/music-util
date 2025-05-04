@@ -1,5 +1,7 @@
-#![warn(clippy::nursery)]
-#![allow(clippy::option_if_let_else)]
+#![warn(clippy::complexity)]
+#![warn(clippy::perf)]
+#![warn(clippy::style)]
+#![warn(clippy::correctness)]
 
 use clap::Parser;
 use cli::{Cli, Command};
